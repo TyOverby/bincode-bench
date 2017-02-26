@@ -19,3 +19,6 @@ path = "../flame"
 
 [dependencies.bincode]
 path = "../bincode"
+
+[profile.release]
+lto = true

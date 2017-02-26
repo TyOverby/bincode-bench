@@ -223,18 +223,18 @@ fn main() {
     let bincode_vec_writer = RunInfo {
         strategy: "bincode",
         output: "vec (prealloc)",
-        version: "eager prealloc",
+        version: "eager-prealloc",
         debug: cfg!(debug_assertions),
-        iterations: 100,
+        iterations: 500,
     };
 
     // Make a new vec every time
     let bincode_vec = RunInfo {
         strategy: "bincode",
         output: "vec",
-        version: "eager prealloc",
+        version: "eager-prealloc",
         debug: cfg!(debug_assertions),
-        iterations: 100,
+        iterations: 500,
     };
 
     // Make a new vec every time
@@ -243,20 +243,18 @@ fn main() {
         output: "vec",
         version: "0.0.5",
         debug: cfg!(debug_assertions),
-        iterations: 100,
+        iterations: 500,
     };
 
     let (ser_stats, de_stats) = bench_vec_backing::<bincode_bencher::BincodeBench, _>(&model, bincode_vec_writer);
     latin::file::append_line("./ser_stats.json", serde_json::to_string(&ser_stats).unwrap()).unwrap();
     latin::file::append_line("./de_stats.json", serde_json::to_string(&de_stats).unwrap()).unwrap();
 
-    /*
     let (ser_stats, de_stats) = bench_slice::<serde_bencher::SerdeBench, _>(&model, serde_bench);
     latin::file::append_line("./ser_stats.json", serde_json::to_string(&ser_stats).unwrap()).unwrap();
     latin::file::append_line("./de_stats.json", serde_json::to_string(&de_stats).unwrap()).unwrap();
-    */
 
-    let (ser_stats, de_stats) = bench_slice::<serde_bencher::SerdeBench, _>(&model, bincode_vec);
+    let (ser_stats, de_stats) = bench_slice::<bincode_bencher::BincodeBench, _>(&model, bincode_vec);
     latin::file::append_line("./ser_stats.json", serde_json::to_string(&ser_stats).unwrap()).unwrap();
     latin::file::append_line("./de_stats.json", serde_json::to_string(&de_stats).unwrap()).unwrap();
 }

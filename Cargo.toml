@@ -1,0 +1,21 @@
+[package]
+name = "bincode-bench"
+version = "0.1.0"
+authors = ["Ty Overby <ty@pre-alpha.com>"]
+
+[[bin]]
+name = "bincode-bench"
+path = "./src/main.rs"
+
+[dependencies]
+serde = "0.9.*"
+serde_derive = "0.9.*"
+serde_json = "0.9.*"
+serde-bench = "*"
+latin = "*"
+
+[dependencies.flame]
+path = "../flame"
+
+[dependencies.bincode]
+path = "../bincode"

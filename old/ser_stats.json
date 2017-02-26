@@ -1,0 +1,10 @@
+{"info":{"strategy":"serde-bench","version":"0.0.5","output":"vec","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":277648,"max_ns":708689,"avg_ns":316362}
+
+{"info":{"strategy":"bincode","version":"size-limit-trait","output":"vec (prealloc)","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":185163,"max_ns":588604,"avg_ns":191538}
+{"info":{"strategy":"bincode","version":"size-limit-trait","output":"vec","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":381929,"max_ns":830125,"avg_ns":419041}
+
+{"info":{"strategy":"bincode","version":"inline-all-the-things","output":"vec (prealloc)","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":205956,"max_ns":646621,"avg_ns":221614}
+{"info":{"strategy":"bincode","version":"inline-all-the-things","output":"vec","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":266111,"max_ns":709992,"avg_ns":306910}
+
+{"info":{"strategy":"bincode","version":"eager prealloc","output":"vec (prealloc)","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":208227,"max_ns":608134,"avg_ns":220064}
+{"info":{"strategy":"bincode","version":"eager prealloc","output":"vec","debug":false,"iterations":100},"size":896208,"runs":"...","min_ns":267288,"max_ns":932749,"avg_ns":308760}

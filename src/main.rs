@@ -30,22 +30,19 @@ struct RunInfo {
 #[derive(Debug, Serialize)]
 struct SerStats {
     info: RunInfo,
-    size: u64,
 
-    runs: Vec<u64>,
-    min_ns: u64,
-    max_ns: u64,
-    avg_ns: u64,
+    total_time: u64,
+    total_written: u64,
+    avg_time: u64,
 }
 
 #[derive(Debug, Serialize)]
 struct DeStats {
     info: RunInfo,
 
-    runs: Vec<u64>,
-    min_ns: u64,
-    max_ns: u64,
-    avg_ns: u64,
+    total_time: u64,
+    total_read: u64,
+    avg_time: u64,
 }
 
 fn get_json_file(count: usize) -> Vec<model::Element> {
@@ -78,68 +75,44 @@ fn duration_ns<R, F: FnOnce() -> R>(f: F) -> (u64, R) {
 
 fn bench_vec_backing<B, T>(t: &T, info: RunInfo) -> (SerStats, DeStats)
     where T: Serialize + Deserialize, B: SerDeBench<T> {
-    use std::cmp::{min, max};
 
-    let buffer;
+    let mut buffer = vec![];
 
     // Serialization
     let ser_stats = {
-        let mut min_ns = std::u64::MAX;
-        let mut max_ns = 0;
-        let mut total_ns = 0;
+        B::ser(t, &mut buffer);
 
-        let mut out = vec![];
-        let mut runs = Vec::with_capacity(info.iterations as usize);
-
-        for _ in 0 .. info.iterations {
-            out.clear();
-
-            let (nanos_elapsed, _) = duration_ns(|| B::ser(t, &mut out));
-
-            runs.push(nanos_elapsed);
-            min_ns = min(min_ns, nanos_elapsed);
-            max_ns = max(max_ns, nanos_elapsed);
-            total_ns += nanos_elapsed;
-        }
-
-        let len = out.len() as u64;
-        buffer = out;
+        let (duration, _) = duration_ns(|| {
+            for _ in 0 .. info.iterations {
+                B::ser(t, &mut &mut buffer[..]);
+            }
+        });
 
         SerStats {
             info: info,
-            size: len,
 
-            runs: runs,
-            min_ns: min_ns,
-            max_ns: max_ns,
-            avg_ns: total_ns / info.iterations,
+            total_time: duration,
+            total_written: buffer.len() as u64 *  info.iterations,
+            avg_time: duration / info.iterations,
         }
     };
 
     // Deserialization
     let de_stats = {
-        let mut min_ns = std::u64::MAX;
-        let mut max_ns = 0;
-        let mut total_ns = 0;
 
-        let mut runs = Vec::with_capacity(info.iterations as usize);
-
-        for _ in 0 .. info.iterations {
-            let (nanos_elapsed, _) = duration_ns(|| B::de(&mut &buffer[..]));
-
-            runs.push(nanos_elapsed);
-            min_ns = min(min_ns, nanos_elapsed);
-            max_ns = max(max_ns, nanos_elapsed);
-            total_ns += nanos_elapsed;
-        }
+        test::black_box(B::de(&mut &buffer[..]));
+        let (duration, _) = duration_ns(|| {
+            for _ in 0 .. info.iterations {
+                test::black_box(B::de(&mut &buffer[..]));
+            }
+        });
 
         DeStats {
             info: info,
 
-            runs: runs,
-            min_ns: min_ns,
-            max_ns: max_ns,
-            avg_ns: total_ns / info.iterations,
+            total_time: duration,
+            total_read: buffer.len() as u64 * info.iterations,
+            avg_time: duration / info.iterations,
         }
     };
 
@@ -149,67 +122,44 @@ fn bench_vec_backing<B, T>(t: &T, info: RunInfo) -> (SerStats, DeStats)
 fn bench_slice<B, T>(t: &T, info: RunInfo) -> (SerStats, DeStats)
 where T: Serialize + Deserialize, B: SliceSerDeBench<T>
 {
-    use std::cmp::{min, max};
 
     let buffer;
 
     // Serialization
     let ser_stats = {
-        let mut min_ns = std::u64::MAX;
-        let mut max_ns = 0;
-        let mut total_ns = 0;
+        buffer = B::ser_vec(t);
 
-        let mut out = vec![];
-        let mut runs = Vec::with_capacity(info.iterations as usize);
-
-        for _ in 0 .. info.iterations {
-            let (nanos_elapsed, r) = duration_ns(|| B::ser_vec(t));
-            out = r;
-
-            runs.push(nanos_elapsed);
-            min_ns = min(min_ns, nanos_elapsed);
-            max_ns = max(max_ns, nanos_elapsed);
-            total_ns += nanos_elapsed;
-        }
-
-        let len = out.len() as u64;
-        buffer = out;
+        let (duration, _) = duration_ns(|| {
+            for _ in 0 .. info.iterations {
+                test::black_box(B::ser_vec(t));
+            }
+        });
 
         SerStats {
             info: info,
-            size: len,
 
-            runs: runs,
-            min_ns: min_ns,
-            max_ns: max_ns,
-            avg_ns: total_ns / info.iterations,
+            total_time: duration,
+            total_written: buffer.len() as u64 *  info.iterations,
+            avg_time: duration / info.iterations,
         }
     };
 
     // Deserialization
     let de_stats = {
-        let mut min_ns = std::u64::MAX;
-        let mut max_ns = 0;
-        let mut total_ns = 0;
+        test::black_box(B::de_slice(&mut &buffer[..]));
 
-        let mut runs = Vec::with_capacity(info.iterations as usize);
-
-        for _ in 0 .. info.iterations {
-            let (nanos_elapsed, _) = duration_ns(|| B::de_slice(&mut &buffer[..]));
-
-            runs.push(nanos_elapsed);
-            min_ns = min(min_ns, nanos_elapsed);
-            max_ns = max(max_ns, nanos_elapsed);
-            total_ns += nanos_elapsed;
-        }
+        let (duration, _)  = duration_ns(|| {
+            for _ in 0 .. info.iterations {
+                test::black_box(B::de_slice(&mut &buffer[..]));
+            }
+        });
 
         DeStats {
             info: info,
 
-            runs: runs,
-            min_ns: min_ns,
-            max_ns: max_ns,
-            avg_ns: total_ns / info.iterations,
+            total_time: duration,
+            total_read: buffer.len() as u64 * info.iterations,
+            avg_time: duration / info.iterations,
         }
     };
 
